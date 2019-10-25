@@ -30,9 +30,9 @@ rm(list=ls())
 options(scipen = 999)
 options(knitr.kable.NA = '')
 
-token <- gs_auth(cache = FALSE)
-gd_token()
-saveRDS(token, file = "googlesheets_token.rds")
+# token <- gs_auth(cache = FALSE)
+# gd_token()
+# saveRDS(token, file = "googlesheets_token.rds")
 
 
 gs_auth(token = "googlesheets_token.rds")
@@ -75,9 +75,15 @@ fq<-fq %>%
   ))
 
 fq %>% 
-  mutate("materiale"=ifelse(materiale=is.na, fq$matrice,fq$materiale))
-
-mat<-fq %>% 
+  mutate("materiale"=ifelse(is.na(fq$materiale), fq$matrice,fq$materiale)) %>% 
   group_by(materiale) %>% 
   summarise(n=n()) %>% 
-  arrange(desc(n))
+  arrange(n) %>% 
+  top_n(15,n) %>% 
+  mutate(materiale = factor(materiale, unique(materiale))) %>%
+  ggplot(aes(x=materiale, y=n))+ 
+  geom_bar(stat="identity",fill="steelblue3")+labs(x="")+
+  coord_flip()+theme(axis.text=element_text(size=10))
+  
+
+

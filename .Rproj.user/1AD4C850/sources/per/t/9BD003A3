@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1572019118385.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "364126458",
+    "id" : "9BD003A3",
+    "lastKnownWriteTime" : 1572040594,
+    "last_content_update" : 1572040594514,
+    "path" : "~/GitHub/Febbre-Q/code.r",
+    "project_path" : "code.r",
+    "properties" : {
+        "cursorPosition" : "87,0",
+        "disableDependencyDiscovery" : "1",
+        "scrollLine" : "53"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
