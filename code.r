@@ -38,12 +38,15 @@ options(knitr.kable.NA = '')
 gs_auth(token = "googlesheets_token.rds")
 suppressMessages(gs_auth(token = "googlesheets_token.rds", verbose = FALSE))
 
-sheet <- gs_title("febbreq")
+#sheet <- gs_title("febbreq")
+sheet <- gs_title("fqbg")
 fq<-gs_read(sheet)
 
+fq<-fq[,-16]
 
-names(fq)<-c("nconf","dtprel","codaz","specie","materiale","ncamp","esito","finalita","pr","rg",
-             "com","sacc","san","ran","matrice")
+
+# names(fq)<-c("nconf","dtprel","codaz","specie","materiale","ncamp","esito","finalita","pr","rg",
+#              "com","sacc","san","ran","matrice")
 
 fq$codaz<-casefold(fq$codaz, upper = TRUE)
 
@@ -57,8 +60,16 @@ fq<-mutate(fq,anno=year(dtprel))
 fq<-mutate(fq,mese=month(dtprel))
 
 
+fq<-
+  fq %>% 
+  mutate("prova"=ifelse(prova=="Febbre Q da Coxiella burnetii: agente eziologico", 
+"AgEziologico", "Sierologia"))
+
+
+
 fin<-fq %>% 
-  group_by(finalita) %>% 
+  filter(prova=="AgEziologico") %>% 
+  group_by(fin) %>% 
   summarise(n=n()) %>% 
   arrange(desc(n))
 
