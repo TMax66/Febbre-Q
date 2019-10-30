@@ -38,11 +38,11 @@ options(knitr.kable.NA = '')
 gs_auth(token = "googlesheets_token.rds")
 suppressMessages(gs_auth(token = "googlesheets_token.rds", verbose = FALSE))
 
-#sheet <- gs_title("febbreq")
-sheet <- gs_title("fqbg")
+sheet <- gs_title("fq")
+#sheet <- gs_title("fqbg")
 fq<-gs_read(sheet)
 
-fq<-fq[,-16]
+
 
 
 # names(fq)<-c("nconf","dtprel","codaz","specie","materiale","ncamp","esito","finalita","pr","rg",
@@ -62,39 +62,63 @@ fq<-mutate(fq,mese=month(dtprel))
 
 fq<-
   fq %>% 
-  mutate("prova"=ifelse(prova=="Febbre Q da Coxiella burnetii: agente eziologico", 
+  mutate("tipo_ricerca"=ifelse(prova=="Febbre Q da Coxiella burnetii: agente eziologico", 
 "AgEziologico", "Sierologia"))
 
 
-
-fin<-fq %>% 
-  filter(prova=="AgEziologico") %>% 
-  group_by(fin) %>% 
-  summarise(n=n()) %>% 
-  arrange(desc(n))
-
+names(fq)[c(12:16)]<-c("Agpos","Abneg","Abdub","Agneg","Abpos")
 
 fq<-fq %>% 
-  filter(finalita %in% c("Diagnostica","Piano monitoraggio latte crudo al consumo",
-         "Piano monitoraggio latte crudo","Monitoraggio fauna selvatica Lombardia",
-         "Piano aborti bovine da latte","Piano sorveglianza latte crudo ASL",
-         "Autocontrollo","Piano sorveglianza latte crudo al consumo ASL",
-         "Monitoraggio fauna selvatica","Monitoraggio","Piano Bruc. Leb. Latte Lombardia",
-         "Monitoraggio fauna selvatica Emilia Romagna")) %>% 
+  mutate(AgTot = rowSums(.[c(12,15)], na.rm=T),AbTot=rowSums(.[c(13,14,16)], na.rm = T)) %>%
+  select(-"Abneg",-"Abdub",-"Agneg", -"x")
+
+fq<-fq %>% 
+  filter(fin%in% c("Diagnostica","Piano monitoraggio latte crudo al consumo",
+                   "Piano monitoraggio latte crudo","Monitoraggio fauna selvatica Lombardia",
+                   "Piano aborti bovine da latte","Piano sorveglianza latte crudo ASL",
+                   "Autocontrollo","Piano sorveglianza latte crudo al consumo ASL",
+                   "Monitoraggio fauna selvatica","Monitoraggio","Piano Bruc. Leb. Latte Lombardia",
+                   "Monitoraggio fauna selvatica Emilia Romagna")) %>% 
   mutate("sorveglianza"=ifelse(
-    finalita=="Diagnostica" |finalita=="Autocontrollo", "Passiva", "Attiva"
-  ))
+    fin=="Diagnostica" |fin=="Autocontrollo", "Passiva", "Attiva"
+  )) 
+
+
+
+fin<-fq %>%  
+  filter(tipo_ricerca=="AgEziologico") %>% 
+  group_by(fin, anno) %>% 
+  summarise(
+            "totag"=sum(AgTot)) %>% 
+  pivot_wider(names_from=anno,values_from=totag ) 
+
+
+
+
 
 fq %>% 
-  mutate("materiale"=ifelse(is.na(fq$materiale), fq$matrice,fq$materiale)) %>% 
-  group_by(materiale) %>% 
-  summarise(n=n()) %>% 
-  arrange(n) %>% 
-  top_n(15,n) %>% 
-  mutate(materiale = factor(materiale, unique(materiale))) %>%
-  ggplot(aes(x=materiale, y=n))+ 
+  filter(tipo_ricerca=="AgEziologico") %>% 
+  group_by(matrice) %>% 
+    summarise(
+      "totag"=sum(AgTot)) %>% 
+  arrange(totag) %>% 
+  top_n(15,totag) %>% 
+  mutate(matrice = factor(matrice, unique(matrice))) %>%
+  ggplot(aes(x=matrice, y=totag))+ 
   geom_bar(stat="identity",fill="steelblue3")+labs(x="")+
   coord_flip()+theme(axis.text=element_text(size=10))
   
 
+fq %>% 
+  filter(tipo_ricerca=="AgEziologico") %>% 
 
+  group_by(matrice, reg) %>% 
+  summarise(
+    "totag"=sum(AgTot)) %>% 
+  arrange(totag) %>% 
+  top_n(15,totag) %>% 
+  ungroup() %>% 
+  mutate(matrice = factor(matrice, unique(matrice))) %>%
+  ggplot(aes(x=matrice, y=totag))+ 
+  geom_bar(stat="identity",fill="steelblue3")+labs(x="")+
+  coord_flip()+theme(axis.text=element_text(size=10))+facet_wrap(~reg)
